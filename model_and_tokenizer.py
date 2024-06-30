@@ -29,10 +29,7 @@ def get_model_for_ft():
 
 
 def get_model_for_inference():
-    torch.cuda.empty_cache()
-    print(sum(os.path.getsize(os.path.join(dirpath,filename)) for dirpath, dirnames, filenames in os.walk(config["finetuned_models_path"]) for filename in filenames))
-    model = AutoModelForCausalLM.from_pretrained(config["finetuned_models_path"])
-    return model.to(device)
+    return AutoModelForCausalLM.from_pretrained(config["finetuned_models_path"]).to(device)
 
 
 def get_tokenizer_for_ft():
