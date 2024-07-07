@@ -1,13 +1,27 @@
 from datasets import MetricInfo, Value
 import re
 from sentence_transformers import SentenceTransformer, util
+from transformers import AutoTokenizer, AutoModelForTokenClassification, pipeline
+
+ner_model_name = "dbmdz/bert-large-cased-finetuned-conll03-english"
+tokenizer = AutoTokenizer.from_pretrained(ner_model_name)
+model = AutoModelForTokenClassification.from_pretrained(ner_model_name)
+ner_pipeline = pipeline("ner", model=model, tokenizer=tokenizer)
+
+
+def extract_names_ner(text):
+    # TODO: compare performance against simple regex function (this function is currently unused)
+    ner_results = ner_pipeline(text)
+    names = [result['word'] for result in ner_results if result['entity'].startswith('B-PER')]
+    return set(names)
+
 
 def extract_names(text):
     return re.findall(r'\b[A-Z][a-z]*\b', text)
 
 
 nba_related_words = [
-    'basketball', 'NBA', 'player', 'coach', 'team', 'game', 'season', 'score',
+    'coach',
     'points', 'rebounds', 'assists', 'block', 'steal', 'dunk', 'three-pointer',
     'free throw', 'foul', 'court', 'hoop', 'dribble', 'shoot', 'pass', 'defense'
 ]
@@ -23,26 +37,21 @@ def compute_nba_words_overlap(reference_text, generated_text):
     overlap = nba_words_in_reference.intersection(nba_words_in_generated)
     return len(overlap) / len(nba_words_in_reference) if nba_words_in_reference else 0
 
+
 def compute_sbert_similarity(reference_text, generated_text, model):
     ref_embedding = model.encode(reference_text, convert_to_tensor=True)
     gen_embedding = model.encode(generated_text, convert_to_tensor=True)
-    similarity = util.pytorch_cos_sim(ref_embedding, gen_embedding).item()
+    return util.pytorch_cos_sim(ref_embedding, gen_embedding).item()
 
-    # Normalize cosine similarity to [0, 1]
-    normalized_similarity = (similarity + 1) / 2
-    return normalized_similarity
 
 class NBAMetric:
-    def __init__(self, name_weight, nba_weight, sbert_weight):
-        assert (name_weight+nba_weight+sbert_weight == 1), "Weights should sum up to 1"
-        self.name_weight = name_weight
-        self.nba_weight = nba_weight
-        self.sbert_weight = sbert_weight
+    def __init__(self):
+        # TODO: check other text similarity options
         self.model = SentenceTransformer('all-mpnet-base-v2')
 
     def _info(self):
         return MetricInfo(
-            description="Custom metric for text generation: name extraction and NBA word overlap",
+            description="Custom metric for NBA recap generation",
             citation="",
             inputs_description="Inputs should be a list of reference texts and generated texts.",
             features={
@@ -70,20 +79,23 @@ class NBAMetric:
         nba_overlap_score = total_nba_overlap / len(references)
         sbert_similarity_score = total_sbert_similarity / len(references)
 
-        combined_score = (self.name_weight * name_overlap_score) + (self.nba_weight * nba_overlap_score) + (
-                    self.sbert_weight * sbert_similarity_score)
+        return {
+            "name_overlap_score": name_overlap_score,
+            "nba_overlap_score": nba_overlap_score,
+            "sbert_similarity_score": sbert_similarity_score
+        }
 
-        return combined_score
+
+def nba_metric():
+    return NBAMetric()
 
 
-def nba_metric(name_weight=0.2, nba_weight=0.2, sbert_weight=0.6):
-    return NBAMetric(name_weight, nba_weight, sbert_weight)
-
+# TODO: add more heuristics. for example, maybe use QA (such as "who scored most points?" etc)
 
 if __name__ == "__main__":
     references = ["LeBron James scored 30 points in the NBA game last night."]
     predictions = ["LeBron James made 30 points in the basketball match yesterday."]
 
     metric = nba_metric()
-    combined_score = metric._compute(references=references, predictions=predictions)
-    print(f"Combined Score: {combined_score}")
+    scores = metric._compute(references=references, predictions=predictions)
+    print(scores)
