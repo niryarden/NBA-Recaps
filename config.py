@@ -1,6 +1,6 @@
 config = {
-    "model_name": "google/gemma-2b",
-    "target_modules": ["q_proj", "o_proj", "k_proj", "v_proj", "gate_proj", "up_proj", "down_proj"],
+    "model_name": "meta-llama/Meta-Llama-3.1-8B-Instruct",
+    "target_modules": ["q_proj", "k_proj", "v_proj",  "o_proj", "gate_proj", "up_proj", "down_proj"],
     "task_type": "CAUSAL_LM",
     "context_length": 8192,
     "pretrained_models_path": "/cs/labs/roys/nir.yarden/cache",
@@ -19,8 +19,3 @@ config = {
     "warmup_steps": 500,
     "lr_scheduler_type": "linear"
 }
-
-# other potential models:
-# model_name = "microsoft/Phi-3-mini-4k-instruct"
-# model_name = "meta-llama/Meta-Llama-3-8B"
-# model_name = "meta-llama/Llama-2-7b-hf"
