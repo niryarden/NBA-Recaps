@@ -1,10 +1,17 @@
 import torch
 from config import config
 from process_dataset import get_datasets
-from model_and_tokenizer import get_model_for_inference, get_tokenizer_for_inference
+from model_and_tokenizer import get_fine_tuned_model_for_inference, get_fine_tuned_tokenizer_for_inference, get_raw_model_for_zero_shot_inference, get_raw_tokenizer_for_zero_shot_inference
 
 
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+
+
+def get_model_and_tokenizer(finetuned=False):
+    if finetuned:
+        return get_fine_tuned_model_for_inference(), get_fine_tuned_tokenizer_for_inference()
+    return get_raw_model_for_zero_shot_inference(), get_raw_tokenizer_for_zero_shot_inference()
+
 
 
 def generate_output(model, tokenizer, sample):
@@ -21,8 +28,7 @@ def generate_output(model, tokenizer, sample):
 
 
 def main():
-    model = get_model_for_inference()
-    tokenizer = get_tokenizer_for_inference()
+    model, tokenizer = get_model_and_tokenizer(finetuned=False)
     _, _, test_dataset = get_datasets()
 
     sample = test_dataset[0]

@@ -6,13 +6,6 @@ from config import config
 
 
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-lora_config = LoraConfig(
-    target_modules=config["target_modules"],
-    task_type=config["task_type"],
-    r=config["lora_r"],
-    lora_alpha=config["lora_alpha"],
-    lora_dropout=config["lora_dropout"],
-)
 
 
 def get_model_for_ft():
@@ -28,10 +21,6 @@ def get_model_for_ft():
     return model
 
 
-def get_model_for_inference():
-    return AutoModelForCausalLM.from_pretrained(config["finetuned_models_path"]).to(device)
-
-
 def get_tokenizer_for_ft():
     tokenizer = AutoTokenizer.from_pretrained(config["model_name"], cache_dir=config["pretrained_models_path"], token=os.getenv("HF_TOKEN"))
     tokenizer.pad_token = tokenizer.eos_token
@@ -41,6 +30,21 @@ def get_tokenizer_for_ft():
     return tokenizer
 
 
-def get_tokenizer_for_inference():
+def get_fine_tuned_model_for_inference():
+    model = AutoModelForCausalLM.from_pretrained(config["finetuned_models_path"]).to(device)
+    return model
+
+
+def get_fine_tuned_tokenizer_for_inference():
     tokenizer = AutoTokenizer.from_pretrained(config["finetuned_models_path"])
+    return tokenizer
+
+
+def get_raw_model_for_zero_shot_inference():
+    model = AutoModelForCausalLM.from_pretrained(config["model_name"], cache_dir=config["pretrained_models_path"], token=os.getenv("HF_TOKEN")).to(device)
+    return model
+
+
+def get_raw_tokenizer_for_zero_shot_inference():
+    tokenizer = AutoTokenizer.from_pretrained(config["model_name"], cache_dir=config["pretrained_models_path"], token=os.getenv("HF_TOKEN"))
     return tokenizer
