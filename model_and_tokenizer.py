@@ -1,8 +1,13 @@
 import os
+os.environ["TRANSFORMERS_CACHE"] = "/cs/snapless/roys/lab_resources"
+os.environ["HF_HOME"] = "/cs/snapless/roys/lab_resources"
+os.environ["CUDA_LAUNCH_BLOCKING"] = "1"
+
 import torch
 from transformers import AutoModelForCausalLM, AutoTokenizer
 from peft import get_peft_model, LoraConfig
 from config import config
+
 
 
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
@@ -24,9 +29,6 @@ def get_model_for_ft():
 def get_tokenizer_for_ft():
     tokenizer = AutoTokenizer.from_pretrained(config["model_name"], cache_dir=config["pretrained_models_path"], token=os.getenv("HF_TOKEN"))
     tokenizer.pad_token = tokenizer.eos_token
-    # if tokenizer.pad_token is None:
-    #     tokenizer.add_special_tokens({'pad_token': '[PAD]'})
-    #     model.resize_token_embeddings(len(tokenizer))
     return tokenizer
 
 
