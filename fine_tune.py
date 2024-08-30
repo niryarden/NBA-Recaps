@@ -1,3 +1,8 @@
+import os
+os.environ["TRANSFORMERS_CACHE"] = "/cs/snapless/roys/lab_resources"
+os.environ["HF_HOME"] = "/cs/snapless/roys/lab_resources"
+os.environ["CUDA_LAUNCH_BLOCKING"] = "1"
+
 import torch
 from transformers import Trainer, TrainingArguments
 from config import config
