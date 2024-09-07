@@ -3,7 +3,7 @@ from datasets import load_dataset, load_from_disk
 
 from config import config
 from model_and_tokenizer import get_tokenizer_for_ft
-
+from preprocess.preprocessing import Preprocessor
 
 prompt_structure = """
 <|begin_of_text|><|start_header_id|>system<|end_header_id|>
@@ -36,15 +36,42 @@ def get_datasets():
 
 def process_dataset(tokenizer):
     def preprocess_function(examples):
+        preprocessor = Preprocessor()
         play_by_plays = examples["input"]
-        inputs = [prompt_structure.format(play_by_play=play_by_play) for play_by_play in play_by_plays]
         outputs = examples["output"]
-        model_inputs = tokenizer(inputs, max_length=config["max_input_length"], truncation=True, padding=True)
+        max_length = config["max_input_length"]
+
+        # Calculate available space for play_by_play
+        prompt_template = prompt_structure.replace("<placeholder>", "")
+        prompt_tokens = tokenizer.encode(prompt_template, add_special_tokens=True)
+        available_length = max_length - len(prompt_tokens)
+
+        processed_inputs = []
+        for play_by_play in play_by_plays:
+            # Preprocess the play-by-play
+            processed_play_by_play = preprocessor.preprocess(play_by_play)
+
+            # Encode the processed play-by-play
+            play_by_play_tokens = tokenizer.encode(processed_play_by_play, add_special_tokens=False)
+
+            # Truncate the encoded play-by-play
+            truncated_tokens = play_by_play_tokens[:available_length]
+
+            # Decode the truncated play-by-play back to text
+            truncated_play_by_play = tokenizer.decode(truncated_tokens)
+
+            # Use string formatting to insert the truncated play-by-play into the full prompt
+            full_prompt = prompt_structure.format(play_by_play=truncated_play_by_play)
+
+            processed_inputs.append(full_prompt)
+
+        # Tokenize the processed inputs
+        model_inputs = tokenizer(processed_inputs, max_length=max_length, truncation=True, padding=True)
+
+        # Process labels as before
         labels = tokenizer(outputs, max_length=config["max_output_length"], truncation=True, padding=True).input_ids
-        # Replace padding token id's of the labels by -100 so it's ignored by the loss function
         labels = [[(label if label != tokenizer.pad_token_id else -100) for label in label] for label in labels]
         model_inputs["labels"] = labels
-        return model_inputs
     
     raw_datasets = load_dataset(config["dataset_name"], cache_dir=config["dataset_path"], trust_remote_code=True)
     raw_datasets = raw_datasets.remove_columns("metadata")
