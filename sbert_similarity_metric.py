@@ -13,7 +13,7 @@ class SBERTSimilarityMetric:
         reference_embedding = self.model.encode(reference_text, convert_to_tensor=True)
         generated_embedding = self.model.encode(generated_text, convert_to_tensor=True)
 
-         similarity = util.pytorch_cos_sim(reference_embedding, generated_embedding).item()
+        similarity = util.pytorch_cos_sim(reference_embedding, generated_embedding).item()
 
         if game_id:
             self.game_scores[game_id] = similarity
