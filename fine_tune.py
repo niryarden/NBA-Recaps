@@ -13,7 +13,6 @@ from model_and_tokenizer import get_model_for_ft, get_tokenizer_for_ft
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
 # metric = evaluate.load("perplexity")
-
 # def compute_metrics(p):
 #     preds = np.argmax(p.predictions, axis=1)
 #     return metric.compute(predictions=preds, references=p.label_ids)
