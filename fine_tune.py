@@ -1,3 +1,8 @@
+import os
+os.environ["TRANSFORMERS_CACHE"] = "/cs/snapless/roys/lab_resources"
+os.environ["HF_HOME"] = "/cs/snapless/roys/lab_resources"
+os.environ["CUDA_LAUNCH_BLOCKING"] = "1"
+
 import torch
 from transformers import Trainer, TrainingArguments
 from config import config
@@ -8,7 +13,6 @@ from model_and_tokenizer import get_model_for_ft, get_tokenizer_for_ft
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
 # metric = evaluate.load("perplexity")
-
 # def compute_metrics(p):
 #     preds = np.argmax(p.predictions, axis=1)
 #     return metric.compute(predictions=preds, references=p.label_ids)
