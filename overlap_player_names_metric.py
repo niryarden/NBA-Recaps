@@ -1,6 +1,7 @@
-from utils import load_nba_dataset
+from utils import load_nba_dataset, DEFAULT_VALUE
 
 from config import config
+
 
 
 class OverLapPlayerNamesMetric:
@@ -23,7 +24,7 @@ class OverLapPlayerNamesMetric:
         generated_names = set(self.extract_names_from_text(names_list, generated_text))
 
         overlap = reference_names.intersection(generated_names)
-        score = len(overlap) / len(reference_names) if reference_names else 0
+        score = len(overlap) / len(reference_names) if reference_names else DEFAULT_VALUE
         if game_id:
             self.game_scores[game_id] = score
 

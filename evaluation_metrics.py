@@ -1,51 +1,36 @@
-import json
-
 from overlap_player_names_metric import OverLapPlayerNamesMetric
 from overlap_words_metric import OverLapWordsMetric
+from plot_utils import analyze_metrics
+from qa_metric import QASimilarityMetric
 from sbert_similarity_metric import SBERTSimilarityMetric
-from utils import PredictedGame
-
-PLAYER_NAMES_KEY = "player_names"
-SOURCE_TEXT_KEY = "source_text"
-GAME_ID_KEY = "game_id"
+from utils import load_results_from_files
 
 
-class NBAMetric:
+class NBAMetrics:
     def __init__(self):
         self.overlap_nba_words_metric = OverLapWordsMetric()
         self.overlap_player_names_metric = OverLapPlayerNamesMetric()
         self.sbert_metric = SBERTSimilarityMetric()
+        self.qa_metric = QASimilarityMetric()
 
-    def compute(self, games):
-        results = {}
-        for game in games:
-            score1 = self.overlap_nba_words_metric.compute_metric(game.reference, game.prediction, game_id=game.game_id)
-            score2 = self.overlap_player_names_metric.compute_metric(game.reference, game.prediction, game.player_names,
-                                                                     game_id=game.game_id)
-            score3 = self.sbert_metric.compute_metric(game.reference, game.prediction, game_id=game.game_id)
-            results[game.game_id] = [score1, score2, score3]
+    def compute_metrics(self):
+        games_df = load_results_from_files()
 
-        return results
+        # Compute the scores for each metric
+        games_df['nba_overlap_score'] = games_df.apply(lambda row: self.overlap_nba_words_metric.compute_metric(
+            row['reference_recap'], row['generated_recap'], game_id=row['game_id']), axis=1)
 
+        games_df['player_names_overlap_score'] = games_df.apply(
+            lambda row: self.overlap_player_names_metric.compute_metric(
+                row['reference_recap'], row['generated_recap'], row['player_names'], game_id=row['game_id']), axis=1)
 
-def load_results():
-    games = []
-    for i in range(10):
-        with open(f"recaps/test_sample_{i}.json") as f:
-            data = json.load(f)
-            curr_metadata = data["metadata"]
-            game_id = curr_metadata["game_id"]
-            players_names = curr_metadata['home_team_players_names'] + curr_metadata['home_team_names_I'] + \
-                            curr_metadata['away_team_players_names'] + curr_metadata['away_team_names_I']
-            curr_game = PredictedGame(game_id, data["reference_recap"], data["generated_recap"], players_names)
+        games_df['sbert_similarity_score'] = games_df.apply(lambda row: self.sbert_metric.compute_metric(
+            row['reference_recap'], row['generated_recap'], game_id=row['game_id']), axis=1)
 
-            games.append(curr_game)
-
-    return games
+        return games_df[['game_id', 'nba_overlap_score', 'player_names_overlap_score', 'sbert_similarity_score']]
 
 
 if __name__ == "__main__":
-    games = load_results()
-    metric = NBAMetric()
-    scores = metric.compute(games)
-    print(scores)
+    metric = NBAMetrics()
+    results = metric.compute_metrics()
+    analyze_metrics(results)

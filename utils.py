@@ -1,13 +1,39 @@
 from datasets import load_dataset
 from config import config
+import os
+import json
+import pandas as pd
+
+DEFAULT_VALUE = None
 
 
-class PredictedGame:
-    def __init__(self, game_id, reference, prediction, player_names):
-        self.game_id = game_id
-        self.reference = reference
-        self.prediction = prediction
-        self.player_names = player_names
+def load_results_from_files():
+    game_data = []
+    folder_path = "recaps/"
+    for filename in os.listdir(folder_path):
+        if filename.endswith(".json"):
+            file_path = os.path.join(folder_path, filename)
+            with open(file_path) as f:
+                data = json.load(f)
+                curr_metadata = data["metadata"]
+                game_id = curr_metadata["game_id"]
+
+                players_names = (
+                        curr_metadata['home_team_players_names'] +
+                        curr_metadata['home_team_names_I'] +
+                        curr_metadata['away_team_players_names'] +
+                        curr_metadata['away_team_names_I']
+                )
+
+                game_data.append({
+                    'game_id': game_id,
+                    'reference_recap': data["reference_recap"],
+                    'generated_recap': data["generated_recap"],
+                    'player_names': players_names,
+                    'metadata': curr_metadata
+                })
+
+    return pd.DataFrame(game_data)
 
 
 def load_nba_dataset(dataset=config["dataset_name"], limit=None):
