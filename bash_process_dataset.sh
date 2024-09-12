@@ -4,7 +4,7 @@
 #SBATCH --mail-type=BEGIN
 #SBATCH --mail-type=END
 #SBATCH --mail-type=FAIL
-#SBATCH --gres=gpu:1,vmem:40g
+#SBATCH --gres=gpu:1,vmem:24g
 #SBATCH --mem=24g
 #SBATCH --time=2-0
 #SBATCH -c4

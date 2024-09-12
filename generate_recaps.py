@@ -3,7 +3,7 @@ os.environ["TRANSFORMERS_CACHE"] = "/cs/snapless/roys/lab_resources"
 os.environ["HF_HOME"] = "/cs/snapless/roys/lab_resources"
 os.environ["CUDA_LAUNCH_BLOCKING"] = "1"
 
-import random
+import argparse
 import json
 import torch
 from config import config
@@ -35,11 +35,21 @@ def generate_output(model, tokenizer, sample):
 
 
 def main():
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--first_index", type=int, default=0)
+    parser.add_argument("--last_index", type=int, default=567)
+    args =  parser.parse_args()
+    first_index, last_index = args.first_index, args.last_index
+    print(args)
+
     model, tokenizer = get_model_and_tokenizer(finetuned=False)
     _, _, test_dataset = get_datasets()
 
-    for i, sample in enumerate(test_dataset):
+    for i in range(first_index, last_index + 1):
+        if i >= len(test_dataset):
+            break
         print(f"sample no. {i}")
+        sample = test_dataset[i]
         to_save = {}
         to_save["metadata"] = sample["metadata"]
         to_save["reference_recap"] = sample["output"]
