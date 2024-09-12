@@ -20,6 +20,7 @@ class OverLapPlayerNamesMetric:
         return extracted_names
 
     def compute_metric(self, reference_text, generated_text, names_list, game_id=None):
+        names_list = names_list.split(",")
         reference_names = set(self.extract_names_from_text(names_list, reference_text))
         generated_names = set(self.extract_names_from_text(names_list, generated_text))
 

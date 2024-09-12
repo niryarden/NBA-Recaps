@@ -11,7 +11,7 @@ class NBAMetrics:
         self.overlap_nba_words_metric = OverLapWordsMetric()
         self.overlap_player_names_metric = OverLapPlayerNamesMetric()
         self.sbert_metric = SBERTSimilarityMetric()
-        self.qa_metric = QASimilarityMetric()
+        # self.qa_metric = QASimilarityMetric()
 
     def compute_metrics(self):
         games_df = load_results_from_files()
